@@ -9,7 +9,7 @@ class HyperParams:
         self.paddingID = 0
 
         self.maxIter = 10000
-        self.verboseIter = 10
+        self.verboseIter = 100
         self.wordCutOff = 0
         self.wordEmbSize = 100
         self.wordFineTune = False
@@ -20,7 +20,7 @@ class HyperParams:
         self.thread = 1
         self.learningRate = 0.001
         self.maxInstance = -1
-        self.batch = 10
+        self.batch = 5
 
         self.wordAlpha = Alphabet()
         self.labelAlpha = Alphabet()

@@ -94,12 +94,13 @@ class CRF(nn.Module):
         maxSentSize = len(tags) // batch
         feats = torch.split(feats, maxSentSize)
         tags = torch.split(tags, maxSentSize)
-        loss = 0
+        loss = []
         for idx in range(batch):
             forward_score = self._forward_alg(feats[idx])
             gold_score = self._score_sentence(feats[idx], tags[idx])
-            loss += forward_score - gold_score
-        loss /= batch
-        return loss
+            loss.append(forward_score - gold_score)
+        loss = torch.cat(loss, 0)
+        sum = torch.sum(loss)
+        return sum / batch
 
 

@@ -149,7 +149,8 @@ class Labeler:
             print('###Iteration' + str(iter) + "###")
             random.shuffle(indexes)
             for updateIter in range(batchBlock):
-                self.model.zero_grad()
+                #self.model.zero_grad()
+                optimizer.zero_grad()
                 exams = []
                 start_pos = updateIter * self.hyperParams.batch
                 end_pos = (updateIter + 1) * self.hyperParams.batch
@@ -157,8 +158,8 @@ class Labeler:
                     exams.append(trainExamples[indexes[idx]])
                 feats, labels = self.getBatchFeatLabel(exams)
                 tag_scores = self.model(feats, self.hyperParams.batch)
+                #print(tag_scores.size())
                 loss = self.model.crf.neg_log_likelihood(tag_scores, labels, self.hyperParams.batch)
-                #print(tag_scores)
                 loss.backward()
                 optimizer.step()
                 if (updateIter + 1) % self.hyperParams.verboseIter == 0:
