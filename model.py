@@ -1,6 +1,5 @@
 import torch.nn as nn
 import torch.autograd
-from CRF import CRF
 
 class RNNLabeler(nn.Module):
     def __init__(self, hyperParams):
@@ -15,7 +14,6 @@ class RNNLabeler(nn.Module):
         self.wordEmb.weight.requires_grad = hyperParams.wordFineTune
         self.LSTM = nn.LSTM(hyperParams.wordEmbSize, hyperParams.rnnHiddenSize // 2, batch_first=True, bidirectional=True)
         self.linearLayer = nn.Linear(hyperParams.rnnHiddenSize, hyperParams.labelSize, bias=True)
-        self.crf = CRF(hyperParams.labelSize)
 
     def init_hidden(self, batch):
        return (torch.autograd.Variable(torch.randn(2, batch, self.hyperParams.rnnHiddenSize // 2)),
@@ -51,11 +49,11 @@ class RNNLabeler(nn.Module):
 
         print("Load Embedding file: ", file, ", size: ", embDim)
         oov = 0
-        for idx in range(self.hyperParams.wordNum):
+        for idx in range(alpha.m_size):
             if idx not in indexs:
                 oov += 1
-        print("OOV Num: ", oov, "Total Num: ", self.hyperParams.wordNum,
-              "OOV Ratio: ", oov / self.hyperParams.wordNum)
+        print("OOV Num: ", oov, "Total Num: ", alpha.m_size,
+              "OOV Ratio: ", oov / alpha.m_size)
         print("OOV ", self.hyperParams.unk, "use avg value initialize")
         return emb
 

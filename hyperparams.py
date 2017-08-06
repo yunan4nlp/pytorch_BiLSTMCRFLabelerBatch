@@ -9,18 +9,18 @@ class HyperParams:
         self.paddingID = 0
 
         self.maxIter = 10000
-        self.verboseIter = 100
+        self.verboseIter = 1
         self.wordCutOff = 0
         self.wordEmbSize = 100
-        self.wordFineTune = False
+        self.wordFineTune = True
         #self.wordEmbFile = "E:\\py_workspace\\my_rnn_crf\\data\\glove.twitter.27B.100d.txt"
         self.wordEmbFile = ""
-        self.dropProb = 0.1
+        self.dropProb = 0.5
         self.rnnHiddenSize = 100
         self.thread = 1
         self.learningRate = 0.001
-        self.maxInstance = -1
-        self.batch = 5
+        self.maxInstance = 40
+        self.batch = 40
 
         self.wordAlpha = Alphabet()
         self.labelAlpha = Alphabet()

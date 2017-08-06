@@ -10,6 +10,7 @@ from instance import Example
 from hyperparams import HyperParams
 from model import RNNLabeler
 from eval import Eval
+from CRF import CRF
 
 
 class Labeler:
@@ -76,7 +77,7 @@ class Labeler:
             w = inst.words[idx]
             wordId = self.hyperParams.wordAlpha.from_string(w)
             if wordId == -1:
-                wordId = self.unkID
+                wordId = self.hyperParams.unkWordID
             feat.wordIndexs.data[0][idx] = wordId
         return feat
 
@@ -137,8 +138,10 @@ class Labeler:
         testExamples = self.instance2Example(testInsts)
 
         self.model = RNNLabeler(self.hyperParams)
+        self.crf = CRF(self.hyperParams.labelSize)
         parameters = filter(lambda p: p.requires_grad, self.model.parameters())
-        optimizer = torch.optim.Adam(parameters, lr=self.hyperParams.learningRate)
+        optimizer_rnn = torch.optim.Adam(parameters, lr = self.hyperParams.learningRate)
+        optimizer_crf = torch.optim.Adam(self.crf.parameters(), lr = self.hyperParams.learningRate)
 
         indexes = []
         for idx in range(len(trainExamples)):
@@ -148,9 +151,12 @@ class Labeler:
         for iter in range(self.hyperParams.maxIter):
             print('###Iteration' + str(iter) + "###")
             random.shuffle(indexes)
+            self.model.train()
             for updateIter in range(batchBlock):
                 #self.model.zero_grad()
-                optimizer.zero_grad()
+                optimizer_rnn.zero_grad()
+                optimizer_crf.zero_grad()
+
                 exams = []
                 start_pos = updateIter * self.hyperParams.batch
                 end_pos = (updateIter + 1) * self.hyperParams.batch
@@ -159,12 +165,16 @@ class Labeler:
                 feats, labels = self.getBatchFeatLabel(exams)
                 tag_scores = self.model(feats, self.hyperParams.batch)
                 #print(tag_scores.size())
-                loss = self.model.crf.neg_log_likelihood(tag_scores, labels, self.hyperParams.batch)
+                loss = self.crf.neg_log_likelihood(tag_scores, labels, self.hyperParams.batch)
                 loss.backward()
-                optimizer.step()
+
+                optimizer_rnn.step()
+                optimizer_crf.step()
+
                 if (updateIter + 1) % self.hyperParams.verboseIter == 0:
                     print('current: ', idx + 1, ", cost:", loss.data[0])
 
+            self.model.eval()
             eval_dev = Eval()
             for idx in range(len(devExamples)):
                 predictLabels = self.predict(devExamples[idx])
@@ -181,7 +191,7 @@ class Labeler:
 
     def predict(self, exam):
         tag_hiddens = self.model(exam.feat.wordIndexs)
-        _, best_path = self.model.crf._viterbi_decode(tag_hiddens)
+        _, best_path = self.crf._viterbi_decode(tag_hiddens)
         predictLabels = []
         for idx in range(len(best_path)):
             predictLabels.append(self.hyperParams.labelAlpha.from_id(best_path[idx]))
