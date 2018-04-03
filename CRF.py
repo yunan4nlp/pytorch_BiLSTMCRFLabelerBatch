@@ -4,9 +4,10 @@ import torch.nn as nn
 
 
 class CRF(nn.Module):
-    def __init__(self, labelSize):
+    def __init__(self, labelSize, hyperParams):
         super(CRF, self).__init__()
         self.labelSize = labelSize
+        self.hyperParams = hyperParams
         self.T = nn.Parameter(torch.randn(self.labelSize, self.labelSize))
 
 
@@ -46,10 +47,11 @@ class CRF(nn.Module):
         alpha_score = self.log_sum_exp(forward_var)
         return alpha_score
 
-
     def _viterbi_decode(self, feats):
         init_score = torch.Tensor(1, self.labelSize).fill_(0)
         forward_var = autograd.Variable(init_score)
+        if self.hyperParams.cuda is True:
+            forward_var = forward_var.cuda()
         back = []
         for idx in range(len(feats)):
             feat = feats[idx]
@@ -81,6 +83,8 @@ class CRF(nn.Module):
         if len(feats) != len(labels):
             print('error in score sentence')
         score = autograd.Variable(torch.Tensor([0]))
+        if self.hyperParams.cuda is True:
+            score = score.cuda()
         for idx in range(len(feats)):
             feat = feats[idx]
             if idx == 0:

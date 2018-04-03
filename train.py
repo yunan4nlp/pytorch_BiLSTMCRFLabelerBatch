@@ -79,6 +79,8 @@ class Labeler:
             if wordId == -1:
                 wordId = self.hyperParams.unkWordID
             feat.wordIndexs.data[0][idx] = wordId
+        if self.hyperParams.cuda is True:
+            feat.wordIndexs = feat.wordIndexs.cuda()
         return feat
 
     def instance2Example(self, insts):
@@ -116,6 +118,9 @@ class Labeler:
                     batch_labels.data[idx * maxSentSize + idy] = e.labelIndexs[idy].data[0]
                 else:
                     batch_labels.data[idx * maxSentSize + idy] = 0
+        if self.hyperParams.cuda is True:
+            batch_feats = batch_feats.cuda()
+            batch_labels = batch_labels.cuda()
         return batch_feats, batch_labels
 
     def train(self, train_file, dev_file, test_file):
@@ -138,7 +143,12 @@ class Labeler:
         testExamples = self.instance2Example(testInsts)
 
         self.model = RNNLabeler(self.hyperParams)
-        self.crf = CRF(self.hyperParams.labelSize)
+        self.crf = CRF(self.hyperParams.labelSize, self.hyperParams)
+
+        if self.hyperParams.cuda is True:
+            self.model.cuda()
+            self.crf.cuda()
+
         parameters = filter(lambda p: p.requires_grad, self.model.parameters())
         optimizer_rnn = torch.optim.Adam(parameters, lr = self.hyperParams.learningRate)
         optimizer_crf = torch.optim.Adam(self.crf.parameters(), lr = self.hyperParams.learningRate)
@@ -190,6 +200,8 @@ class Labeler:
             eval_test.getFscore()
 
     def predict(self, exam):
+        # if self.hyperParams.cuda is True:
+        #     exam.feat.wordIndexs = exam.feat.wordIndexs.cuda()
         tag_hiddens = self.model(exam.feat.wordIndexs)
         _, best_path = self.crf._viterbi_decode(tag_hiddens)
         predictLabels = []
@@ -219,6 +231,11 @@ parser.add_option("--test", dest="testFile",
 
 
 (options, args) = parser.parse_args()
+
+options.trainFile = "./conll2000/train.txt"
+options.devFile = "./conll2000/test.txt"
+options.testFile = "./conll2000/test.txt"
+
 l = Labeler()
 l.train(options.trainFile, options.devFile, options.testFile)
 

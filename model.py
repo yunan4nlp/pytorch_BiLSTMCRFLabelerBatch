@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch.autograd
+from torch.autograd import Variable
 
 class RNNLabeler(nn.Module):
     def __init__(self, hyperParams):
@@ -63,8 +64,9 @@ class RNNLabeler(nn.Module):
         wordRepresents = self.wordEmb(feat)
         wordRepresents = self.dropOut(wordRepresents)
         LSTMHidden = self.init_hidden(batch)
-        LSTMOutputs, _ = self.LSTM(wordRepresents.view(batch, sentSize, -1), LSTMHidden)
-        LSTMOutputs = torch.cat(LSTMOutputs, 0)
+        # LSTMOutputs, _ = self.LSTM(wordRepresents.view(batch, sentSize, -1), LSTMHidden)
+        LSTMOutputs, _ = self.LSTM(wordRepresents.view(batch, sentSize, -1))
+        LSTMOutputs = Variable(torch.cat(LSTMOutputs.data, 0))
 
         tagHiddens = self.linearLayer(LSTMOutputs)
         return tagHiddens
