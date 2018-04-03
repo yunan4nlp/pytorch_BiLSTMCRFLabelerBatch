@@ -8,6 +8,7 @@ class HyperParams:
         self.unkWordID = 0
         self.paddingID = 0
 
+        self.cuda = True
         self.maxIter = 10000
         self.verboseIter = 1
         self.wordCutOff = 0
@@ -24,6 +25,7 @@ class HyperParams:
 
         self.wordAlpha = Alphabet()
         self.labelAlpha = Alphabet()
+
     def show(self):
         print('wordCutOff = ', self.wordCutOff)
         print('wordEmbSize = ', self.wordEmbSize)
